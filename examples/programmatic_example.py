@@ -1,11 +1,13 @@
 """Programmatic example: Define everything in code, assign plies, and plot."""
-
 import numpy as np
 import pyvista as pv
 import json
+import logging
 from b3_drp.core.assign import assign_plies
-from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition
+from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition, Material
 from b3_drp.core.plotting import plot_grid
+
+logging.basicConfig(level=logging.INFO)
 
 # Define datums
 te_offset = Datum(base="r", values=[[0, 0], [20, 0.1], [40, 0.2]])
@@ -69,4 +71,4 @@ result_grid = assign_plies(
 # Plot
 plot_grid(result_grid, scalar="total_thickness")
 
-print("Programmatic example completed.")
+logging.info("Programmatic example completed.")

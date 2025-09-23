@@ -1,7 +1,10 @@
 """Example workflow: Create a 20x20 square mesh, assign x and y, and drape plies narrowing from whole to [0.4-0.6]."""
 import numpy as np
 import pyvista as pv
+import logging
 from b3_drp.core.assign import assign_plies, load_config
+
+logging.basicConfig(level=logging.INFO)
 
 # Create a 20x20 square mesh in [0,1]
 x = np.linspace(0, 1, 21)
@@ -29,4 +32,4 @@ mesh.save('examples/input_mesh.vtu')
 config = load_config('examples/config.yaml')
 assign_plies(config, 'examples/input_mesh.vtu', 'examples/matdb.json', 'examples/output_mesh.vtu', required_fields=['x', 'y'])
 
-print("Example completed. Check examples/output_mesh.vtu")
+logging.info("Example completed. Check examples/output_mesh.vtu")

@@ -1,5 +1,4 @@
 """Assign plies to mesh elements based on conditions."""
-
 import numpy as np
 import pyvista as pv
 import pandas as pd
@@ -18,6 +17,7 @@ def load_config(config_path: str) -> Config:
 
     with open(config_path, "r") as f:
         data = yaml.safe_load(f)
+    logger.info(f"Loaded config from {config_path}")
     return Config(**data)
 
 
@@ -25,6 +25,7 @@ def load_matdb(matdb_path: str) -> MatDB:
     """Load and validate material database from JSON."""
     with open(matdb_path, "r") as f:
         data = json.load(f)
+    logger.info(f"Loaded material database from {matdb_path}")
     return MatDB(data)
 
 
@@ -34,10 +35,12 @@ def prepare_grid(grid: pv.UnstructuredGrid, required_fields: List[str]) -> pd.Da
     for field in required_fields:
         if field in grid.cell_data:
             df[field] = grid.cell_data[field]
+            logger.info(f"Using cell data for field {field}")
         elif field in grid.point_data:
             # Translate point to cell
             grid = grid.point_data_to_cell_data(pass_point_data=True)
             df[field] = grid.cell_data[field]
+            logger.info(f"Translated point data to cell data for field {field}")
         else:
             raise ValueError(f"Required field {field} not found in grid.")
     return df
@@ -47,11 +50,13 @@ def evaluate_conditions(
     df: pd.DataFrame, conditions: List[Condition], datums: Dict[str, Any]
 ) -> np.ndarray:
     """Evaluate conditions vectorized."""
+    logger.info(f"Evaluating {len(conditions)} conditions")
     mask = np.ones(len(df), dtype=bool)
     for cond in conditions:
         field = cond.field
         operator = cond.operator
         operand = cond.operand
+        logger.debug(f"Evaluating condition: {field} {operator} {operand}")
         if operator == "in_range":
             min_v, max_v = operand
             mask &= (df[field] >= min_v) & (df[field] <= max_v)
@@ -64,11 +69,13 @@ def evaluate_conditions(
                         df[datum["base"]], values[:, 0], values[:, 1]
                     )
                     mask &= df[field] > interp_vals
+                    logger.debug(f"Interpolated datum {operand} for field {field}")
                 else:
                     raise ValueError(f"Datum {operand} not found")
             else:
                 mask &= df[field] > operand
         # Add more operators as needed
+    logger.info(f"Conditions evaluation complete, {mask.sum()} cells match")
     return mask
 
 
@@ -80,11 +87,13 @@ def get_thickness(
 ) -> np.ndarray:
     """Get thickness array, either constant or interpolated from datum."""
     if isinstance(thickness, float):
+        logger.debug(f"Using constant thickness {thickness}")
         return np.full(len(df), thickness, dtype=np.float32)
     elif isinstance(thickness, str):
         if thickness in datums:
             datum = datums[thickness]
             values = np.array(datum["values"])
+            logger.debug(f"Interpolating thickness from datum {thickness}")
             return np.interp(df[datum["base"]], values[:, 0], values[:, 1])
         else:
             raise ValueError(f"Datum {thickness} not found for thickness.")
@@ -152,6 +161,7 @@ def assign_plies(
         grid.cell_data[f"ply_{ply_num}_{parent}_{key}_thickness"] = np.where(
             mask, thickness_arr, 0
         )
+        logger.debug(f"Added ply data for {ply_num}")
 
         # Update sums
         total_thickness += np.where(mask, thickness_arr, 0)
@@ -163,6 +173,7 @@ def assign_plies(
     grid.cell_data["n_plies"] = n_plies
     for parent, thick in per_parent_thickness.items():
         grid.cell_data[f"{parent}_thickness"] = thick
+    logger.info("Added summed thickness arrays")
 
     logger.info(f"Saving output to {output_path}")
     grid.save(output_path)

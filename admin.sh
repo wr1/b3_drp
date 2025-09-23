@@ -5,7 +5,7 @@ ruff format pyproject.toml
 ruff check --fix pyproject.toml > out.txt
 uv run pytest -v >> out.txt
 git add pyproject.toml
-git commit -m 'Add treeparse dependency to pyproject.toml'
+git commit -m 'Add treeparse and matplotlib dependencies to pyproject.toml'
 
 # src/b3_drp/cli/main.py
 ruff format src/b3_drp/cli/main.py
@@ -27,6 +27,34 @@ ruff check --fix src/b3_drp/core/assign.py > out.txt
 uv run pytest -v >> out.txt
 git add src/b3_drp/core/assign.py
 git commit -m 'Fix datum interpolation to use correct base field in src/b3_drp/core/assign.py'
+
+# examples/programmatic_example.py
+ruff format examples/programmatic_example.py
+ruff check --fix examples/programmatic_example.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/programmatic_example.py
+git commit -m 'Add verbose logging to programmatic example'
+
+# examples/example_workflow.py
+ruff format examples/example_workflow.py
+ruff check --fix examples/example_workflow.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/example_workflow.py
+git commit -m 'Add verbose logging to example workflow'
+
+# src/b3_drp/core/assign.py
+ruff format src/b3_drp/core/assign.py
+ruff check --fix src/b3_drp/core/assign.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/core/assign.py
+git commit -m 'Add verbose logger output for internal activities in src/b3_drp/core/assign.py'
+
+# src/b3_drp/core/plotting.py
+ruff format src/b3_drp/core/plotting.py
+ruff check --fix src/b3_drp/core/plotting.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/core/plotting.py
+git commit -m 'Change plotting to use matplotlib for thickness distribution in src/b3_drp/core/plotting.py'
 
 # admin.sh
 ruff format admin.sh
