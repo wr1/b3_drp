@@ -11,6 +11,7 @@ from b3_drp.core.assign import (
     load_config,
     load_matdb,
     evaluate_conditions,
+    get_thickness,
 )
 
 
@@ -31,7 +32,7 @@ plies:
         config = load_config(f.name)
     os.unlink(f.name)
     assert "plies" in config
-    assert len(config["plies"]) == 1
+    assert len(config.plies) == 1
 
 
 def test_load_matdb():
@@ -41,7 +42,7 @@ def test_load_matdb():
         f.flush()
         matdb = load_matdb(f.name)
     os.unlink(f.name)
-    assert matdb["carbon"]["id"] == 1
+    assert matdb.root["carbon"].id == 1
 
 
 def test_evaluate_conditions():
@@ -55,6 +56,23 @@ def test_evaluate_conditions():
     mask = evaluate_conditions(df, conditions, datums)
     expected = np.array([False, True, False])
     np.testing.assert_array_equal(mask, expected)
+
+
+def test_get_thickness():
+    df = pd.DataFrame({"x": [0.0, 0.5, 1.0]})
+    datums = {
+        "thickness_taper": {"values": np.array([[0, 0.001], [0.5, 0.002], [1, 0.001]])}
+    }
+
+    # Constant thickness
+    thick = get_thickness(0.001, df, datums)
+    expected = np.array([0.001, 0.001, 0.001])
+    np.testing.assert_array_almost_equal(thick, expected)
+
+    # Tapered thickness
+    thick = get_thickness("thickness_taper", df, datums)
+    expected = np.array([0.001, 0.002, 0.001])
+    np.testing.assert_array_almost_equal(thick, expected)
 
 
 def test_assign_plies():
