@@ -12,7 +12,7 @@ ruff format src/b3_drp/cli/main.py
 ruff check --fix src/b3_drp/cli/main.py > out.txt
 uv run pytest -v >> out.txt
 git add src/b3_drp/cli/main.py
-git commit -m 'Refactor CLI to use treeparse in src/b3_drp/cli/main.py'
+git commit -m 'Refactor CLI to use treeparse and add optional plotting in src/b3_drp/cli/main.py'
 
 # admin.sh
 ruff format admin.sh
