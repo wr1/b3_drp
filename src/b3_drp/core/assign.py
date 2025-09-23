@@ -59,10 +59,9 @@ def evaluate_conditions(
             if isinstance(operand, str):
                 if operand in datums:
                     datum = datums[operand]
+                    values = np.array(datum["values"])
                     interp_vals = np.interp(
-                        df[field.split("_")[0]],
-                        datum["values"][:, 0],
-                        datum["values"][:, 1],
+                        df[field.split("_")[0]], values[:, 0], values[:, 1]
                     )
                     mask &= df[field] > interp_vals
                 else:
@@ -85,9 +84,8 @@ def get_thickness(
     elif isinstance(thickness, str):
         if thickness in datums:
             datum = datums[thickness]
-            return np.interp(
-                df[base_field], datum["values"][:, 0], datum["values"][:, 1]
-            )
+            values = np.array(datum["values"])
+            return np.interp(df[base_field], values[:, 0], values[:, 1])
         else:
             raise ValueError(f"Datum {thickness} not found for thickness.")
     else:
