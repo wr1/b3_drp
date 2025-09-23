@@ -1,0 +1,21 @@
+datums:
+  thickness_taper:
+    base: x
+    values: [[0, 0.001], [0.5, 0.002], [1, 0.001]]
+plies:
+  - mat: carbon
+    angle: 0
+    thickness: 0.001
+    parent: plate
+    conditions:
+      - x in range 0-1
+      - y in range 0-1
+    key: 100
+  - mat: glass
+    angle: 45
+    thickness: thickness_taper
+    parent: plate
+    conditions:
+      - x in range 0.4-0.6
+      - y in range 0.4-0.6
+    key: 101
