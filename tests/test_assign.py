@@ -2,8 +2,10 @@
 
 import numpy as np
 import pyvista as pv
+import pandas as pd
 import tempfile
 import os
+import json
 from b3_drp.core.assign import (
     assign_plies,
     load_config,
@@ -84,8 +86,6 @@ def test_assign_plies():
 
         grid.save(grid_path)
         with open(matdb_path, "w") as f:
-            import json
-
             json.dump(matdb, f)
 
         result_grid = assign_plies(
