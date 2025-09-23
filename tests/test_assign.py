@@ -13,7 +13,7 @@ from b3_drp.core.assign import (
     evaluate_conditions,
     get_thickness,
 )
-from b3_drp.core.models import Condition
+from b3_drp.core.models import Condition, Config
 
 
 def test_load_config():
@@ -34,7 +34,6 @@ plies:
         f.flush()
         config = load_config(f.name)
     os.unlink(f.name)
-    assert "plies" in config
     assert len(config.plies) == 1
 
 
@@ -89,7 +88,7 @@ def test_assign_plies():
     grid.cell_data["x"] = np.array([0.5])
     grid.cell_data["y"] = np.array([0.5])
 
-    config = {
+    config_dict = {
         "plies": [
             {
                 "mat": "carbon",
@@ -104,6 +103,7 @@ def test_assign_plies():
             }
         ]
     }
+    config = Config(**config_dict)
     matdb = {"carbon": {"id": 1}}
 
     with tempfile.TemporaryDirectory() as tmpdir:
