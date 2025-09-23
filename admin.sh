@@ -22,7 +22,7 @@ git add examples/programmatic_example.py
 git commit -m 'Fix MatDB instantiation and add matdb file save in examples/programmatic_example.py'
 
 # src/b3_drp/core/assign.py
-ruff format src/b3_drp/core/assign.py
+ruff format src.b3_drp/core/assign.py
 ruff check --fix src/b3_drp/core/assign.py > out.txt
 uv run pytest -v >> out.txt
 git add src/b3_drp/core/assign.py
@@ -62,6 +62,62 @@ ruff check --fix tests/test_assign.py > out.txt
 uv run pytest -v >> out.txt
 git add tests/test_assign.py
 git commit -m 'Fix test_get_thickness to include base in datum dict'
+
+# src/b3_drp/cli/main.py
+ruff format src/b3_drp/cli/main.py
+ruff check --fix src/b3_drp/cli/main.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/cli/main.py
+git commit -m 'Add x-axis and y-axis options to CLI for plotting'
+
+# examples/programmatic_example.py
+ruff format examples/programmatic_example.py
+ruff check --fix examples/programmatic_example.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/programmatic_example.py
+git commit -m 'Add x and y cell data to grid for plotting in programmatic example'
+
+# src/b3_drp/cli/main.py
+ruff format src/b3_drp/cli/main.py
+ruff check --fix src/b3_drp/cli/main.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/cli/main.py
+git commit -m 'Add plot-output option to CLI for saving plot to file'
+
+# src/b3_drp/core/plotting.py
+ruff format src/b3_drp/core/plotting.py
+ruff check --fix src/b3_drp/core/plotting.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/core/plotting.py
+git commit -m 'Modify plot_grid to save plot to file instead of showing'
+
+# examples/programmatic_example.py
+ruff format examples/programmatic_example.py
+ruff check --fix examples/programmatic_example.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/programmatic_example.py
+git commit -m 'Update programmatic example to save plot to file'
+
+# examples/example_workflow.py
+ruff format examples/example_workflow.py
+ruff check --fix examples/example_workflow.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/example_workflow.py
+git commit -m 'Add plotting to example workflow'
+
+# src/b3_drp/core/plotting.py
+ruff format src/b3_drp/core/plotting.py
+ruff check --fix src/b3_drp/core/plotting.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/core/plotting.py
+git commit -m 'Change plotting to use pyvista for mesh element plotting and screenshot'
+
+# examples/programmatic_example.py
+ruff format examples/programmatic_example.py
+ruff check --fix examples/programmatic_example.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/programmatic_example.py
+git commit -m 'Change programmatic example to use 10x10 grid instead of single cell'
 
 # admin.sh
 ruff format admin.sh

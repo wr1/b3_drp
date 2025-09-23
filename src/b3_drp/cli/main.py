@@ -1,5 +1,4 @@
 """CLI entry point using treeparse."""
-
 import logging
 from treeparse import cli, command, argument, option
 from ..core.assign import assign_plies, load_config
@@ -14,6 +13,9 @@ def assign_command(
     verbose: bool = False,
     plot: bool = False,
     scalar: str = "total_thickness",
+    x_axis: str = "x",
+    y_axis: str = "y",
+    plot_output: str = "thickness_plot.png",
 ) -> None:
     """Assign composite plies to FEA mesh."""
     if verbose:
@@ -21,7 +23,7 @@ def assign_command(
     config_data = load_config(config)
     result_grid = assign_plies(config_data, grid, matdb, output)
     if plot:
-        plot_grid(result_grid, scalar=scalar)
+        plot_grid(result_grid, scalar=scalar, x_axis=x_axis, y_axis=y_axis, output_file=plot_output)
 
 
 app = cli(
@@ -57,6 +59,24 @@ assign_cmd = command(
             arg_type=str,
             default="total_thickness",
             help="Scalar field to plot (default: total_thickness)",
+        ),
+        option(
+            flags=["--x-axis"],
+            arg_type=str,
+            default="x",
+            help="X-axis field for plotting (default: x)",
+        ),
+        option(
+            flags=["--y-axis"],
+            arg_type=str,
+            default="y",
+            help="Y-axis field for plotting (default: y)",
+        ),
+        option(
+            flags=["--plot-output"],
+            arg_type=str,
+            default="thickness_plot.png",
+            help="Output file for the plot (default: thickness_plot.png)",
         ),
     ],
 )

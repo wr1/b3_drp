@@ -1,6 +1,5 @@
 """Plotting utilities for ply assignment."""
-
-import matplotlib.pyplot as plt
+import pyvista as pv
 from typing import Optional
 
 
@@ -9,18 +8,14 @@ def plot_grid(
     scalar: Optional[str] = None,
     x_axis: str = "x",
     y_axis: str = "y",
+    output_file: str = "plot.png",
 ) -> None:
-    """Plot the grid thickness distribution using matplotlib scatter."""
+    """Plot the grid with scalar coloring and save screenshot."""
+    plotter = pv.Plotter(off_screen=True)
     if scalar and scalar in grid.cell_data:
-        x = grid.cell_data[x_axis]
-        y = grid.cell_data[y_axis]
-        c = grid.cell_data[scalar]
-        plt.scatter(x, y, c=c, cmap="viridis")
-        plt.colorbar(label=scalar)
-        plt.xlabel(x_axis)
-        plt.ylabel(y_axis)
-        plt.title(f"Thickness distribution: {scalar}")
-        plt.axis("equal")
-        plt.show()
+        plotter.add_mesh(grid, scalars=scalar)
     else:
-        print("Scalar not found or not provided.")
+        plotter.add_mesh(grid)
+    plotter.view_xy()
+    plotter.screenshot(output_file)
+    print(f"Plot saved to {output_file}")

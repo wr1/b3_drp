@@ -1,11 +1,10 @@
 """Programmatic example: Define everything in code, assign plies, and plot."""
-
 import numpy as np
 import pyvista as pv
 import json
 import logging
 from b3_drp.core.assign import assign_plies
-from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition
+from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition, Material
 from b3_drp.core.plotting import plot_grid
 
 logging.basicConfig(level=logging.INFO)
@@ -49,17 +48,33 @@ matdb = MatDB.model_validate({"carbon": {"id": 1}, "glass": {"id": 2}})
 with open("examples/prog_matdb.json", "w") as f:
     json.dump({"carbon": {"id": 1}, "glass": {"id": 2}}, f)
 
-# Create a simple grid (for demonstration, use the same as before)
-points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
-cells = np.array([4, 0, 1, 2, 3])
-grid = pv.UnstructuredGrid(cells, [pv.CellType.QUAD], points)
-# Add required fields (mock)
-grid.cell_data["r"] = np.array([15])
-grid.cell_data["distance_from_le"] = np.array([2])
-grid.cell_data["distance_from_te"] = np.array([0.2])
-grid.cell_data["distance_from_web0"] = np.array([0.5])
+# Create a 10x10 square mesh in [0,1]
+x = np.linspace(0, 1, 11)
+y = np.linspace(0, 1, 11)
+X, Y = np.meshgrid(x, y)
+points = np.column_stack([X.ravel(), Y.ravel(), np.zeros_like(X.ravel())])
 
-grid.save("examples/prog_input.vtu")
+# Create structured grid
+mesh = pv.StructuredGrid()
+mesh.points = points
+mesh.dimensions = [11, 11, 1]
+
+# Compute cell centers for x, y
+cell_centers = mesh.cell_centers()
+mesh.cell_data['x'] = cell_centers.points[:, 0]
+mesh.cell_data['y'] = cell_centers.points[:, 1]
+
+# Convert to unstructured grid for .vtu saving
+mesh = mesh.cast_to_unstructured_grid()
+
+# Add required fields (mock, constant for simplicity)
+n_cells = len(mesh.cell_data['x'])
+mesh.cell_data["r"] = np.full(n_cells, 15.0)
+mesh.cell_data["distance_from_le"] = np.full(n_cells, 2.0)
+mesh.cell_data["distance_from_te"] = np.full(n_cells, 0.2)
+mesh.cell_data["distance_from_web0"] = np.full(n_cells, 0.5)
+
+mesh.save("examples/prog_input.vtu")
 
 # Assign plies
 result_grid = assign_plies(
@@ -70,6 +85,6 @@ result_grid = assign_plies(
 )
 
 # Plot
-plot_grid(result_grid, scalar="total_thickness")
+plot_grid(result_grid, scalar="total_thickness", output_file="examples/prog_plot.png")
 
 logging.info("Programmatic example completed.")
