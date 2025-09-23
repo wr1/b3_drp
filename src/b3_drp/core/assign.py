@@ -91,8 +91,10 @@ def assign_plies(
     # Prepare grid
     df = prepare_grid(grid, required_fields)
 
-    # Sort plies
-    plies.sort(key=lambda p: (p["key"], plies.index(p)))
+    # Sort plies by key, then by definition order
+    plies_with_index = [(i, p) for i, p in enumerate(plies)]
+    plies_with_index.sort(key=lambda x: (x[1]["key"], x[0]))
+    plies = [p for _, p in plies_with_index]
 
     # Assign plies
     for ply in plies:
