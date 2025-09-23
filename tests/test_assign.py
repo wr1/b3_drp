@@ -66,7 +66,10 @@ def test_evaluate_conditions():
 def test_get_thickness():
     df = pd.DataFrame({"x": [0.0, 0.5, 1.0]})
     datums = {
-        "thickness_taper": {"values": np.array([[0, 0.001], [0.5, 0.002], [1, 0.001]])}
+        "thickness_taper": {
+            "base": "x",
+            "values": [[0, 0.001], [0.5, 0.002], [1, 0.001]],
+        }
     }
 
     # Constant thickness
