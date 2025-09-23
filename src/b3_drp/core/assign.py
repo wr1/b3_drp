@@ -7,7 +7,7 @@ import json
 import logging
 from typing import Dict, List, Any, Union
 from collections import defaultdict
-from .models import Config, MatDB
+from .models import Config, MatDB, Condition
 
 logger = logging.getLogger(__name__)
 
@@ -44,29 +44,32 @@ def prepare_grid(grid: pv.UnstructuredGrid, required_fields: List[str]) -> pd.Da
 
 
 def evaluate_conditions(
-    df: pd.DataFrame, conditions: List[str], datums: Dict[str, Any]
+    df: pd.DataFrame, conditions: List[Condition], datums: Dict[str, Any]
 ) -> np.ndarray:
     """Evaluate conditions vectorized."""
     mask = np.ones(len(df), dtype=bool)
     for cond in conditions:
-        # Parse simple conditions like 'r in range 10-20', 'distance_from_te > te_offset'
-        # This is simplified; extend as needed
-        if "in range" in cond:
-            var, rng = cond.split(" in range ")
-            min_v, max_v = map(float, rng.split("-"))
-            mask &= (df[var] >= min_v) & (df[var] <= max_v)
-        elif ">" in cond:
-            left, right = cond.split(" > ")
-            if right in datums:
-                # Interpolate datum
-                datum = datums[right]
-                interp_vals = np.interp(
-                    df[left.split("_")[0]], datum["values"][:, 0], datum["values"][:, 1]
-                )
-                mask &= df[left] > interp_vals
+        field = cond.field
+        operator = cond.operator
+        operand = cond.operand
+        if operator == "in_range":
+            min_v, max_v = operand
+            mask &= (df[field] >= min_v) & (df[field] <= max_v)
+        elif operator == ">":
+            if isinstance(operand, str):
+                if operand in datums:
+                    datum = datums[operand]
+                    interp_vals = np.interp(
+                        df[field.split("_")[0]],
+                        datum["values"][:, 0],
+                        datum["values"][:, 1],
+                    )
+                    mask &= df[field] > interp_vals
+                else:
+                    raise ValueError(f"Datum {operand} not found")
             else:
-                mask &= df[left] > float(right)
-        # Add more condition types as needed
+                mask &= df[field] > operand
+        # Add more operators as needed
     return mask
 
 
@@ -109,10 +112,10 @@ def assign_plies(
     logger.info(f"Loading material database from {matdb_path}")
     matdb = load_matdb(matdb_path)
     datums = {k: v.dict() for k, v in config.datums.items()} if config.datums else {}
-    plies = [p.dict() for p in config.plies]
+    plies = config.plies  # Keep as Pydantic objects
 
     # Check materials
-    used_mats = {p["mat"] for p in plies}
+    used_mats = {p.mat for p in plies}
     missing = used_mats - set(matdb.root.keys())
     if missing:
         raise ValueError(f"Missing materials: {missing}")
@@ -123,9 +126,9 @@ def assign_plies(
     logger.info(f"Prepared grid with {len(df)} cells")
 
     # Sort plies by key, then by definition order
-    plies_with_index = [(i, p) for i, p in enumerate(plies)]
-    plies_with_index.sort(key=lambda x: (x[1]["key"], x[0]))
-    plies = [p for _, p in plies_with_index]
+    plies_list = list(enumerate(plies))
+    plies_list.sort(key=lambda x: (x[1].key, x[0]))
+    plies = [p for _, p in plies_list]
     logger.info(f"Sorted {len(plies)} plies")
 
     # Initialize sums
@@ -135,14 +138,14 @@ def assign_plies(
 
     # Assign plies
     for ply in plies:
-        logger.info(f"Processing ply {ply['key']} with material {ply['mat']}")
-        mask = evaluate_conditions(df, ply["conditions"], datums)
-        thickness_arr = get_thickness(ply["thickness"], df, datums)
-        parent = ply["parent"]
+        logger.info(f"Processing ply {ply.key} with material {ply.mat}")
+        mask = evaluate_conditions(df, ply.conditions, datums)
+        thickness_arr = get_thickness(ply.thickness, df, datums)
+        parent = ply.parent
         # Create arrays
-        mat_id = matdb.root[ply["mat"]].id
-        angle = ply["angle"]
-        key = ply["key"]
+        mat_id = matdb.root[ply.mat].id
+        angle = ply.angle
+        key = ply.key
         ply_num = f"{plies.index(ply) + 1:06d}"
         grid.cell_data[f"ply_{ply_num}_{parent}_{key}_material"] = np.where(
             mask, mat_id, -1
