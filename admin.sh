@@ -14,9 +14,16 @@ uv run pytest -v >> out.txt
 git add src/b3_drp/cli/main.py
 git commit -m 'Refactor CLI to use treeparse and add optional plotting in src/b3_drp/cli/main.py'
 
+# examples/programmatic_example.py
+ruff format examples/programmatic_example.py
+ruff check --fix examples/programmatic_example.py > out.txt
+uv run pytest -v >> out.txt
+git add examples/programmatic_example.py
+git commit -m 'Fix MatDB instantiation and add matdb file save in examples/programmatic_example.py'
+
 # admin.sh
 ruff format admin.sh
 ruff check --fix admin.sh > out.txt
 uv run pytest -v >> out.txt
 git add admin.sh
-git commit -m 'Add admin.sh script for formatting, checking, and committing'
+git commit -m 'Update admin.sh for modified files'
