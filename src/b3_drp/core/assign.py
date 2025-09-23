@@ -4,7 +4,7 @@ import numpy as np
 import pyvista as pv
 import pandas as pd
 import json
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 from collections import defaultdict
 from .models import Config, MatDB
 
@@ -22,7 +22,7 @@ def load_matdb(matdb_path: str) -> MatDB:
     """Load and validate material database from JSON."""
     with open(matdb_path, "r") as f:
         data = json.load(f)
-    return MatDB(__root__=data)
+    return MatDB(data)
 
 
 def prepare_grid(grid: pv.UnstructuredGrid, required_fields: List[str]) -> pd.DataFrame:
@@ -67,6 +67,27 @@ def evaluate_conditions(
     return mask
 
 
+def get_thickness(
+    thickness: Union[float, str],
+    df: pd.DataFrame,
+    datums: Dict[str, Any],
+    base_field: str = "x",
+) -> np.ndarray:
+    """Get thickness array, either constant or interpolated from datum."""
+    if isinstance(thickness, float):
+        return np.full(len(df), thickness, dtype=np.float32)
+    elif isinstance(thickness, str):
+        if thickness in datums:
+            datum = datums[thickness]
+            return np.interp(
+                df[base_field], datum["values"][:, 0], datum["values"][:, 1]
+            )
+        else:
+            raise ValueError(f"Datum {thickness} not found for thickness.")
+    else:
+        raise ValueError("Thickness must be float or string.")
+
+
 def assign_plies(
     config: Config,
     grid_path: str,
@@ -88,7 +109,7 @@ def assign_plies(
 
     # Check materials
     used_mats = {p["mat"] for p in plies}
-    missing = used_mats - set(matdb.__root__.keys())
+    missing = used_mats - set(matdb.root.keys())
     if missing:
         raise ValueError(f"Missing materials: {missing}")
 
@@ -108,10 +129,10 @@ def assign_plies(
     # Assign plies
     for ply in plies:
         mask = evaluate_conditions(df, ply["conditions"], datums)
-        thickness = ply["thickness"]
+        thickness_arr = get_thickness(ply["thickness"], df, datums)
         parent = ply["parent"]
         # Create arrays
-        mat_id = matdb.__root__[ply["mat"]].id
+        mat_id = matdb.root[ply["mat"]].id
         angle = ply["angle"]
         key = ply["key"]
         ply_num = f"{plies.index(ply) + 1:06d}"
@@ -120,13 +141,13 @@ def assign_plies(
         )
         grid.cell_data[f"ply_{ply_num}_{parent}_{key}_angle"] = np.where(mask, angle, 0)
         grid.cell_data[f"ply_{ply_num}_{parent}_{key}_thickness"] = np.where(
-            mask, thickness, 0
+            mask, thickness_arr, 0
         )
 
         # Update sums
-        total_thickness += np.where(mask, thickness, 0)
+        total_thickness += np.where(mask, thickness_arr, 0)
         n_plies += mask.astype(int)
-        per_parent_thickness[parent] += np.where(mask, thickness, 0)
+        per_parent_thickness[parent] += np.where(mask, thickness_arr, 0)
 
     # Add summed arrays
     grid.cell_data["total_thickness"] = total_thickness
