@@ -2,6 +2,7 @@
 
 import numpy as np
 import pyvista as pv
+import json
 from b3_drp.core.assign import assign_plies
 from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition
 from b3_drp.core.plotting import plot_grid
@@ -39,7 +40,11 @@ ply2 = Ply(
 config = Config(datums={"te_offset": te_offset}, plies=[ply1, ply2])
 
 # Define matdb
-matdb = MatDB(__root__={"carbon": {"id": 1}, "glass": {"id": 2}})
+matdb = MatDB.model_validate({"carbon": {"id": 1}, "glass": {"id": 2}})
+
+# Save matdb to file
+with open("examples/prog_matdb.json", "w") as f:
+    json.dump({"carbon": {"id": 1}, "glass": {"id": 2}}, f)
 
 # Create a simple grid (for demonstration, use the same as before)
 points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
