@@ -4,9 +4,12 @@ import numpy as np
 import pyvista as pv
 import pandas as pd
 import json
+import logging
 from typing import Dict, List, Any, Union
 from collections import defaultdict
 from .models import Config, MatDB
+
+logger = logging.getLogger(__name__)
 
 
 def load_config(config_path: str) -> Config:
@@ -101,8 +104,9 @@ def assign_plies(
     ],
 ) -> pv.UnstructuredGrid:
     """Main function to assign plies."""
-    # Load data
+    logger.info(f"Loading grid from {grid_path}")
     grid = pv.read(grid_path)
+    logger.info(f"Loading material database from {matdb_path}")
     matdb = load_matdb(matdb_path)
     datums = {k: v.dict() for k, v in config.datums.items()} if config.datums else {}
     plies = [p.dict() for p in config.plies]
@@ -112,14 +116,17 @@ def assign_plies(
     missing = used_mats - set(matdb.root.keys())
     if missing:
         raise ValueError(f"Missing materials: {missing}")
+    logger.info(f"Used materials: {used_mats}")
 
     # Prepare grid
     df = prepare_grid(grid, required_fields)
+    logger.info(f"Prepared grid with {len(df)} cells")
 
     # Sort plies by key, then by definition order
     plies_with_index = [(i, p) for i, p in enumerate(plies)]
     plies_with_index.sort(key=lambda x: (x[1]["key"], x[0]))
     plies = [p for _, p in plies_with_index]
+    logger.info(f"Sorted {len(plies)} plies")
 
     # Initialize sums
     total_thickness = np.zeros(len(df), dtype=np.float32)
@@ -128,6 +135,7 @@ def assign_plies(
 
     # Assign plies
     for ply in plies:
+        logger.info(f"Processing ply {ply['key']} with material {ply['mat']}")
         mask = evaluate_conditions(df, ply["conditions"], datums)
         thickness_arr = get_thickness(ply["thickness"], df, datums)
         parent = ply["parent"]
@@ -155,5 +163,6 @@ def assign_plies(
     for parent, thick in per_parent_thickness.items():
         grid.cell_data[f"{parent}_thickness"] = thick
 
+    logger.info(f"Saving output to {output_path}")
     grid.save(output_path)
     return grid
