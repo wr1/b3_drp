@@ -9,12 +9,18 @@ class Datum(BaseModel):
     values: List[List[float]]
 
 
+class Condition(BaseModel):
+    field: str
+    operator: str
+    operand: Union[float, str, List[float]]
+
+
 class Ply(BaseModel):
     mat: str
     angle: float
     thickness: Union[float, str]
     parent: str
-    conditions: List[str]
+    conditions: List[Condition]
     key: int
 
 
