@@ -56,6 +56,13 @@ uv run pytest -v >> out.txt
 git add src/b3_drp/core/plotting.py
 git commit -m 'Change plotting to use matplotlib for thickness distribution in src/b3_drp/core/plotting.py'
 
+# tests/test_assign.py
+ruff format tests/test_assign.py
+ruff check --fix tests/test_assign.py > out.txt
+uv run pytest -v >> out.txt
+git add tests/test_assign.py
+git commit -m 'Fix test_get_thickness to include base in datum dict'
+
 # admin.sh
 ruff format admin.sh
 ruff check --fix admin.sh > out.txt
