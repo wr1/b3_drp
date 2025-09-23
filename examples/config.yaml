@@ -8,14 +8,22 @@ plies:
     thickness: 0.001
     parent: plate
     conditions:
-      - x in range 0-1
-      - y in range 0-1
+      - field: x
+        operator: in_range
+        operand: [0, 1]
+      - field: y
+        operator: in_range
+        operand: [0, 1]
     key: 100
   - mat: glass
     angle: 45
     thickness: thickness_taper
     parent: plate
     conditions:
-      - x in range 0.4-0.6
-      - y in range 0.4-0.6
+      - field: x
+        operator: in_range
+        operand: [0.4, 0.6]
+      - field: y
+        operator: in_range
+        operand: [0.4, 0.6]
     key: 101
