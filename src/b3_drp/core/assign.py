@@ -5,6 +5,7 @@ import pyvista as pv
 import pandas as pd
 import json
 from typing import Dict, List, Any
+from collections import defaultdict
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -96,14 +97,19 @@ def assign_plies(
     plies_with_index.sort(key=lambda x: (x[1]["key"], x[0]))
     plies = [p for _, p in plies_with_index]
 
+    # Initialize sums
+    total_thickness = np.zeros(len(df), dtype=np.float32)
+    n_plies = np.zeros(len(df), dtype=int)
+    per_parent_thickness = defaultdict(lambda: np.zeros(len(df), dtype=np.float32))
+
     # Assign plies
     for ply in plies:
         mask = evaluate_conditions(df, ply["conditions"], datums)
+        thickness = ply["thickness"]
+        parent = ply["parent"]
         # Create arrays
         mat_id = matdb[ply["mat"]]["id"]  # Assume matdb has 'id'
         angle = ply["angle"]
-        thickness = ply["thickness"]
-        parent = ply["parent"]
         key = ply["key"]
         ply_num = f"{plies.index(ply) + 1:06d}"
         grid.cell_data[f"ply_{ply_num}_{parent}_{key}_material"] = np.where(
@@ -113,6 +119,17 @@ def assign_plies(
         grid.cell_data[f"ply_{ply_num}_{parent}_{key}_thickness"] = np.where(
             mask, thickness, 0
         )
+
+        # Update sums
+        total_thickness += np.where(mask, thickness, 0)
+        n_plies += mask.astype(int)
+        per_parent_thickness[parent] += np.where(mask, thickness, 0)
+
+    # Add summed arrays
+    grid.cell_data["total_thickness"] = total_thickness
+    grid.cell_data["n_plies"] = n_plies
+    for parent, thick in per_parent_thickness.items():
+        grid.cell_data[f"{parent}_thickness"] = thick
 
     grid.save(output_path)
     return grid
