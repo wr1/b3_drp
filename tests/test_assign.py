@@ -13,6 +13,7 @@ from b3_drp.core.assign import (
     evaluate_conditions,
     get_thickness,
 )
+from b3_drp.core.models import Condition
 
 
 def test_load_config():
@@ -23,7 +24,9 @@ plies:
     thickness: 0.001
     parent: plate
     conditions:
-      - x in range 0-1
+      - field: x
+        operator: in_range
+        operand: [0, 1]
     key: 100
 """
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
@@ -47,12 +50,15 @@ def test_load_matdb():
 
 def test_evaluate_conditions():
     df = pd.DataFrame({"x": [0.0, 0.5, 1.0], "y": [0.0, 0.5, 1.0]})
-    conditions = ["x in range 0-1", "y in range 0-1"]
+    conditions = [
+        Condition(field="x", operator="in_range", operand=[0, 1]),
+        Condition(field="y", operator="in_range", operand=[0, 1]),
+    ]
     datums = {}
     mask = evaluate_conditions(df, conditions, datums)
     assert np.all(mask)  # All true
 
-    conditions = ["x in range 0.4-0.6"]
+    conditions = [Condition(field="x", operator="in_range", operand=[0.4, 0.6])]
     mask = evaluate_conditions(df, conditions, datums)
     expected = np.array([False, True, False])
     np.testing.assert_array_equal(mask, expected)
@@ -90,7 +96,10 @@ def test_assign_plies():
                 "angle": 0,
                 "thickness": 0.001,
                 "parent": "plate",
-                "conditions": ["x in range 0-1", "y in range 0-1"],
+                "conditions": [
+                    {"field": "x", "operator": "in_range", "operand": [0, 1]},
+                    {"field": "y", "operator": "in_range", "operand": [0, 1]},
+                ],
                 "key": 100,
             }
         ]
