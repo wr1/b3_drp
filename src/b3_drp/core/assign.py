@@ -6,20 +6,23 @@ import pandas as pd
 import json
 from typing import Dict, List, Any
 from collections import defaultdict
+from .models import Config, MatDB
 
 
-def load_config(config_path: str) -> Dict[str, Any]:
-    """Load configuration from YAML file."""
+def load_config(config_path: str) -> Config:
+    """Load and validate configuration from YAML file."""
     import yaml
 
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+        data = yaml.safe_load(f)
+    return Config(**data)
 
 
-def load_matdb(matdb_path: str) -> Dict[str, Any]:
-    """Load material database from JSON."""
+def load_matdb(matdb_path: str) -> MatDB:
+    """Load and validate material database from JSON."""
     with open(matdb_path, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    return MatDB(__root__=data)
 
 
 def prepare_grid(grid: pv.UnstructuredGrid, required_fields: List[str]) -> pd.DataFrame:
@@ -65,7 +68,7 @@ def evaluate_conditions(
 
 
 def assign_plies(
-    config: Dict[str, Any],
+    config: Config,
     grid_path: str,
     matdb_path: str,
     output_path: str,
@@ -80,12 +83,12 @@ def assign_plies(
     # Load data
     grid = pv.read(grid_path)
     matdb = load_matdb(matdb_path)
-    datums = config.get("datums", {})
-    plies = config.get("plies", [])
+    datums = {k: v.dict() for k, v in config.datums.items()} if config.datums else {}
+    plies = [p.dict() for p in config.plies]
 
     # Check materials
     used_mats = {p["mat"] for p in plies}
-    missing = used_mats - set(matdb.keys())
+    missing = used_mats - set(matdb.__root__.keys())
     if missing:
         raise ValueError(f"Missing materials: {missing}")
 
@@ -108,7 +111,7 @@ def assign_plies(
         thickness = ply["thickness"]
         parent = ply["parent"]
         # Create arrays
-        mat_id = matdb[ply["mat"]]["id"]  # Assume matdb has 'id'
+        mat_id = matdb.__root__[ply["mat"]].id
         angle = ply["angle"]
         key = ply["key"]
         ply_num = f"{plies.index(ply) + 1:06d}"
