@@ -1,4 +1,5 @@
 """Plotting utilities for ply assignment."""
+
 import matplotlib.pyplot as plt
 from typing import Optional
 
@@ -14,12 +15,12 @@ def plot_grid(
         x = grid.cell_data[x_axis]
         y = grid.cell_data[y_axis]
         c = grid.cell_data[scalar]
-        plt.scatter(x, y, c=c, cmap='viridis')
+        plt.scatter(x, y, c=c, cmap="viridis")
         plt.colorbar(label=scalar)
         plt.xlabel(x_axis)
         plt.ylabel(y_axis)
         plt.title(f"Thickness distribution: {scalar}")
-        plt.axis('equal')
+        plt.axis("equal")
         plt.show()
     else:
         print("Scalar not found or not provided.")
