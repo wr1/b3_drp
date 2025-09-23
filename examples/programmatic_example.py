@@ -1,10 +1,11 @@
 """Programmatic example: Define everything in code, assign plies, and plot."""
+
 import numpy as np
 import pyvista as pv
 import json
 import logging
 from b3_drp.core.assign import assign_plies
-from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition, Material
+from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition
 from b3_drp.core.plotting import plot_grid
 
 logging.basicConfig(level=logging.INFO)
