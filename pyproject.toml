@@ -25,4 +25,4 @@ b3_drp = "b3_drp.cli:main"
 line-length = 88
 
 [tool.pytest.ini_options]
-addopts = "--cov=b3_drp --cov-report=html"
+addopts = "--cov=b3_drp"
