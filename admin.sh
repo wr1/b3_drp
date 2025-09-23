@@ -21,6 +21,13 @@ uv run pytest -v >> out.txt
 git add examples/programmatic_example.py
 git commit -m 'Fix MatDB instantiation and add matdb file save in examples/programmatic_example.py'
 
+# src/b3_drp/core/assign.py
+ruff format src/b3_drp/core/assign.py
+ruff check --fix src/b3_drp/core/assign.py > out.txt
+uv run pytest -v >> out.txt
+git add src/b3_drp/core/assign.py
+git commit -m 'Fix datum interpolation to use correct base field in src/b3_drp/core/assign.py'
+
 # admin.sh
 ruff format admin.sh
 ruff check --fix admin.sh > out.txt
