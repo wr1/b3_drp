@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-b3_drp = "b3_drp.cli:main"
+b3_drp = "b3_drp.cli.main:main"
 
 [tool.uv]
 [tool.ruff]
