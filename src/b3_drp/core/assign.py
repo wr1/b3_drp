@@ -107,12 +107,6 @@ def assign_plies(
     grid_path: str,
     matdb_path: str,
     output_path: str,
-    required_fields: List[str] = [
-        "r",
-        "distance_from_le",
-        "distance_from_te",
-        "distance_from_web0",
-    ],
 ) -> pv.UnstructuredGrid:
     """Main function to assign plies."""
     logger.info(f"Loading grid from {grid_path}")
@@ -121,6 +115,17 @@ def assign_plies(
     matdb = load_matdb(matdb_path)
     datums = {k: v.dict() for k, v in config.datums.items()} if config.datums else {}
     plies = config.plies  # Keep as Pydantic objects
+
+    # Compute required fields from config
+    required_fields = set()
+    for ply in plies:
+        for cond in ply.conditions:
+            required_fields.add(cond.field)
+        if isinstance(ply.thickness, str):
+            if ply.thickness in datums:
+                required_fields.add(datums[ply.thickness]["base"])
+    required_fields = list(required_fields)
+    logger.info(f"Required fields: {required_fields}")
 
     # Check materials
     used_mats = {p.mat for p in plies}

@@ -1,9 +1,15 @@
 """CLI entry point using treeparse."""
-
 import logging
+from rich.logging import RichHandler
 from treeparse import cli, command, argument, option
 from ..core.assign import assign_plies, load_config
 from ..core.plotting import plot_grid
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[RichHandler(show_time=False)],
+)
 
 
 def assign_command(
@@ -20,17 +26,11 @@ def assign_command(
 ) -> None:
     """Assign composite plies to FEA mesh."""
     if verbose:
-        logging.basicConfig(level=logging.INFO)
+        logging.getLogger().setLevel(logging.DEBUG)
     config_data = load_config(config)
     result_grid = assign_plies(config_data, grid, matdb, output)
     if plot:
-        plot_grid(
-            result_grid,
-            scalar=scalar,
-            x_axis=x_axis,
-            y_axis=y_axis,
-            output_file=plot_output,
-        )
+        plot_grid(result_grid, scalar=scalar, x_axis=x_axis, y_axis=y_axis, output_file=plot_output)
 
 
 app = cli(

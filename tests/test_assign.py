@@ -119,7 +119,7 @@ def test_assign_plies():
             json.dump(matdb, f)
 
         result_grid = assign_plies(
-            config, grid_path, matdb_path, output_path, required_fields=["x", "y"]
+            config, grid_path, matdb_path, output_path
         )
 
         assert "ply_000001_plate_100_material" in result_grid.cell_data

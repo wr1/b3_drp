@@ -1,0 +1,18 @@
+datums:
+  thickness_taper:
+    base: z
+    values: [[-200, 0.001], [-100, 0.008], [0, 0.001]]
+
+plies:
+  - mat: carbon
+    angle: 0
+    thickness: thickness_taper
+    parent: plate
+    conditions:
+      - field: z
+        operator: in_range
+        operand: [-1e3, 1e3]
+      # - field: y
+      #   operator: in_range
+      #   operand: [0, 1]
+    key: 100

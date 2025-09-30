@@ -31,9 +31,10 @@ mesh.save('examples/input_mesh.vtu')
 
 # Load config and matdb
 config = load_config('examples/config.yaml')
-result_grid = assign_plies(config, 'examples/input_mesh.vtu', 'examples/matdb.json', 'examples/output_mesh.vtu', required_fields=['x', 'y'])
+result_grid = assign_plies(config, 'examples/input_mesh.vtu', 'examples/matdb.json', 'examples/output_mesh.vtu')
 
 # Plot
 plot_grid(result_grid, scalar="total_thickness", output_file="examples/workflow_plot.png")
 
 logging.info("Example completed. Check examples/output_mesh.vtu and examples/workflow_plot.png")
+logging.info("To run the same draping operation using b3_drp CLI: b3_drp assign examples/config.yaml examples/input_mesh.vtu examples/matdb.json examples/output_mesh.vtu --plot --plot-output examples/workflow_plot.png")
