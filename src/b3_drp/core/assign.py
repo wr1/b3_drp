@@ -66,6 +66,8 @@ def evaluate_conditions(
                 if operand in datums:
                     datum = datums[operand]
                     values = np.array(datum["values"])
+                    sort_idx = np.argsort(values[:, 0])
+                    values = values[sort_idx]
                     interp_vals = np.interp(
                         df[datum["base"]], values[:, 0], values[:, 1]
                     )
@@ -94,6 +96,8 @@ def get_thickness(
         if thickness in datums:
             datum = datums[thickness]
             values = np.array(datum["values"])
+            sort_idx = np.argsort(values[:, 0])
+            values = values[sort_idx]
             logger.debug(f"Interpolating thickness from datum {thickness}")
             return np.interp(df[datum["base"]], values[:, 0], values[:, 1])
         else:

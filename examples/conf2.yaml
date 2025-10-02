@@ -1,7 +1,7 @@
 datums:
   thickness_taper:
     base: z
-    values: [[-200, 0.001], [-100, 0.008], [0, 0.001]]
+    values: [[-200, 0.001], [-100, 0.008], [0, 0.001],[100,0.2]]
 
 plies:
   - mat: carbon
