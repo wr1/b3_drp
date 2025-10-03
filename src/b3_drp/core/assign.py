@@ -31,17 +31,12 @@ def load_matdb(matdb_path: str) -> MatDB:
 
 
 def prepare_grid(grid: pv.UnstructuredGrid, required_fields: List[str]) -> pd.DataFrame:
-    """Prepare grid data, translating point to cell if needed."""
+    """Prepare grid data."""
     df = pd.DataFrame()
     for field in required_fields:
         if field in grid.cell_data:
             df[field] = grid.cell_data[field]
             logger.info(f"Using cell data for field {field}")
-        elif field in grid.point_data:
-            # Translate point to cell
-            grid = grid.point_data_to_cell_data(pass_point_data=True)
-            df[field] = grid.cell_data[field]
-            logger.info(f"Translated point data to cell data for field {field}")
         else:
             raise ValueError(f"Required field {field} not found in grid.")
     return df
@@ -115,6 +110,9 @@ def assign_plies(
     """Main function to assign plies."""
     logger.info(f"Loading grid from {grid_path}")
     grid = pv.read(grid_path)
+    # Pre-translate all point data to cell data
+    grid = grid.point_data_to_cell_data(pass_point_data=True)
+    logger.info("Translated all point data to cell data")
     logger.info(f"Loading material database from {matdb_path}")
     matdb = load_matdb(matdb_path)
     datums = {k: v.dict() for k, v in config.datums.items()} if config.datums else {}
