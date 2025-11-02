@@ -1,0 +1,49 @@
+datums:
+  thickness_taper:
+    base: y
+    values: [[0, 0], [2.5, 0.01], [5, 0]]
+  foam_taper:
+    base: y
+    values: [[0.1, 0],[0.5,0.03], [4.5, 0.03], [4.9, 0]]
+  x_taper:
+    base: x
+    values: [[0.1, 0],[0.5,1], [0.8, 1], [0.9, 0]]
+
+plies:
+  - mat: glass
+    angle: 45
+    thickness: thickness_taper
+    parent: quad
+    conditions:
+      - field: x
+        operator: in_range
+        operand: [0, 1]
+      - field: y
+        operator: in_range
+        operand: [0, 5]
+    key: 101
+  - mat: foam
+    angle: 0
+    thickness: foam_taper
+    parent: quad
+    conditions:
+      - field: x
+        operator: in_range
+        operand: [0.05, 0.95]
+      - field: y
+        operator: in_range
+        operand: [0, 5]
+    key: 102
+  - mat: glass
+    angle: 45
+    thickness: thickness_taper
+    parent: quad
+    conditions:
+      - field: x
+        operator: in_range
+        operand: [0, 1]
+      - field: y
+        operator: in_range
+        operand: [0, 5]
+    key: 105
+
