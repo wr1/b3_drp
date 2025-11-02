@@ -1,7 +1,7 @@
 datums:
   thickness_taper:
     base: z
-    values: [[-200, 0.001], [-100, 0.008], [0, 0.001],[100,0.2]]
+    values: [[-101, 0.0], [-100, 0.008], [-30, 0.008],[-28,0.0]]
 
 plies:
   - mat: carbon
@@ -12,7 +12,10 @@ plies:
       - field: z
         operator: in_range
         operand: [-1e3, 1e3]
-      # - field: y
-      #   operator: in_range
-      #   operand: [0, 1]
+      - field: abs_dist_web1_hp0
+        operator: in_range
+        operand: [0, 0.4]
+      - field: panel_id
+        operator: in_range
+        operand: [1,12]
     key: 100

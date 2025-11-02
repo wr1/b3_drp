@@ -1,10 +1,11 @@
 """Programmatic example: Define everything in code, assign plies, and plot."""
+
 import numpy as np
 import pyvista as pv
 import json
 import logging
 from b3_drp.core.assign import assign_plies
-from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition, Material
+from b3_drp.core.models import Config, MatDB, Datum, Ply, Condition
 from b3_drp.core.plotting import plot_grid
 
 logging.basicConfig(level=logging.INFO)
@@ -61,14 +62,14 @@ mesh.dimensions = [11, 11, 1]
 
 # Compute cell centers for x, y
 cell_centers = mesh.cell_centers()
-mesh.cell_data['x'] = cell_centers.points[:, 0]
-mesh.cell_data['y'] = cell_centers.points[:, 1]
+mesh.cell_data["x"] = cell_centers.points[:, 0]
+mesh.cell_data["y"] = cell_centers.points[:, 1]
 
 # Convert to unstructured grid for .vtu saving
 mesh = mesh.cast_to_unstructured_grid()
 
 # Add required fields (mock, constant for simplicity)
-n_cells = len(mesh.cell_data['x'])
+n_cells = len(mesh.cell_data["x"])
 mesh.cell_data["r"] = np.full(n_cells, 15.0)
 mesh.cell_data["distance_from_le"] = np.full(n_cells, 2.0)
 mesh.cell_data["distance_from_te"] = np.full(n_cells, 0.2)

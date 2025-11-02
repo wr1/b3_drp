@@ -118,9 +118,7 @@ def test_assign_plies():
         with open(matdb_path, "w") as f:
             json.dump(matdb, f)
 
-        result_grid = assign_plies(
-            config, grid_path, matdb_path, output_path
-        )
+        result_grid = assign_plies(config, grid_path, matdb_path, output_path)
 
         assert "ply_000001_plate_100_material" in result_grid.cell_data
         assert result_grid.cell_data["ply_000001_plate_100_material"][0] == 1

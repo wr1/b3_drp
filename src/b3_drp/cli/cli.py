@@ -1,4 +1,5 @@
 """CLI entry point using treeparse."""
+
 import logging
 from rich.logging import RichHandler
 from treeparse import cli, command, argument, option
@@ -30,7 +31,13 @@ def assign_command(
     config_data = load_config(config)
     result_grid = assign_plies(config_data, grid, matdb, output)
     if plot:
-        plot_grid(result_grid, scalar=scalar, x_axis=x_axis, y_axis=y_axis, output_file=plot_output)
+        plot_grid(
+            result_grid,
+            scalar=scalar,
+            x_axis=x_axis,
+            y_axis=y_axis,
+            output_file=plot_output,
+        )
 
 
 app = cli(

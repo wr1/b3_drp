@@ -1,6 +1,10 @@
 """Plotting utilities for ply assignment."""
+
 import pyvista as pv
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def plot_grid(
@@ -18,4 +22,4 @@ def plot_grid(
         plotter.add_mesh(grid)
     plotter.view_xy()
     plotter.screenshot(output_file)
-    print(f"Plot saved to {output_file}")
+    logger.info(f"Plot saved to {output_file}")
