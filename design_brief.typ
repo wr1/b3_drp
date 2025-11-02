@@ -66,3 +66,17 @@ the code then loads a pyvista/vtk grid and a material database
 - multiprocessing
 - matplotlib for plotting
 - pyvista for mesh handling
+
+
+= cli update
+
+- drape 
+    --lamplan
+    --grid
+    --matdb
+- plot
+    --scalar
+
+
+
+

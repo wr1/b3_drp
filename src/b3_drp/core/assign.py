@@ -18,6 +18,8 @@ def load_config(config_path: str) -> Config:
 
     with open(config_path, "r") as f:
         data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        raise ValueError(f"Config file {config_path} is not a valid YAML dictionary.")
     logger.info(f"Loaded config from {config_path}")
     return Config(**data)
 
