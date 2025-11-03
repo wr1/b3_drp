@@ -5,6 +5,7 @@ import pyvista as pv
 import pandas as pd
 import json
 import logging
+import re
 from typing import Dict, List, Any, Union
 from collections import defaultdict
 from .models import Config, MatDB, Condition
@@ -18,17 +19,23 @@ def load_config(config_path: str) -> Config:
 
     with open(config_path, "r") as f:
         data = yaml.safe_load(f)
+    if "laminates" in data:
+        laminates = data.pop("laminates")
+        data.update(laminates)
     if not isinstance(data, dict):
         raise ValueError(f"Config file {config_path} is not a valid YAML dictionary.")
     logger.info(f"Loaded config from {config_path}")
     return Config(**data)
 
 
-def load_matdb(matdb_path: str) -> MatDB:
-    """Load and validate material database from JSON."""
-    with open(matdb_path, "r") as f:
-        data = json.load(f)
-    logger.info(f"Loaded material database from {matdb_path}")
+def load_matdb(matdb_path: Union[str, dict]) -> MatDB:
+    """Load and validate material database from JSON file or dict."""
+    if isinstance(matdb_path, str):
+        with open(matdb_path, "r") as f:
+            data = json.load(f)
+    else:
+        data = matdb_path
+    logger.info(f"Loaded material database")
     return MatDB(data)
 
 
@@ -79,13 +86,33 @@ def evaluate_conditions(
     return mask
 
 
+def parse_thickness_expression(thickness_expr: str, datums: Dict[str, Any], df: pd.DataFrame) -> np.ndarray:
+    """Parse and evaluate thickness expression with datums."""
+    # Find datum names in expression
+    words = re.findall(r'\b\w+\b', thickness_expr)
+    datum_names = [w for w in words if w in datums]
+    # Interpolate each datum
+    interp_datums = {}
+    for name in datum_names:
+        datum = datums[name]
+        values = np.array(datum["values"])
+        sort_idx = np.argsort(values[:, 0])
+        values = values[sort_idx]
+        interp_datums[name] = np.interp(df[datum["base"]], values[:, 0], values[:, 1])
+    # Evaluate expression
+    try:
+        result = eval(thickness_expr, {"__builtins__": None}, interp_datums)
+        return np.array(result, dtype=np.float32)
+    except Exception as e:
+        raise ValueError(f"Error evaluating thickness expression '{thickness_expr}': {e}")
+
+
 def get_thickness(
     thickness: Union[float, str],
     df: pd.DataFrame,
     datums: Dict[str, Any],
-    base_field: str = "x",
 ) -> np.ndarray:
-    """Get thickness array, either constant or interpolated from datum."""
+    """Get thickness array, either constant, datum, or expression."""
     if isinstance(thickness, float):
         logger.debug(f"Using constant thickness {thickness}")
         return np.full(len(df), thickness, dtype=np.float32)
@@ -98,15 +125,24 @@ def get_thickness(
             logger.debug(f"Interpolating thickness from datum {thickness}")
             return np.interp(df[datum["base"]], values[:, 0], values[:, 1])
         else:
-            raise ValueError(f"Datum {thickness} not found for thickness.")
+            logger.debug(f"Evaluating thickness expression {thickness}")
+            return parse_thickness_expression(thickness, datums, df)
     else:
         raise ValueError("Thickness must be float or string.")
+
+
+def get_datums_from_thickness(thickness: Union[float, str], datums: Dict[str, Any]) -> List[str]:
+    """Get list of datum names used in thickness."""
+    if isinstance(thickness, str) and thickness not in datums:
+        words = re.findall(r'\b\w+\b', thickness)
+        return [w for w in words if w in datums]
+    return []
 
 
 def assign_plies(
     config: Config,
     grid_path: str,
-    matdb_path: str,
+    matdb_path: Union[str, dict],
     output_path: str,
 ) -> pv.UnstructuredGrid:
     """Main function to assign plies."""
@@ -115,9 +151,9 @@ def assign_plies(
     # Pre-translate all point data to cell data
     grid = grid.point_data_to_cell_data(pass_point_data=True)
     logger.info("Translated all point data to cell data")
-    logger.info(f"Loading material database from {matdb_path}")
+    logger.info(f"Loading material database")
     matdb = load_matdb(matdb_path)
-    datums = {k: v.dict() for k, v in config.datums.items()} if config.datums else {}
+    datums = {k: v.model_dump() for k, v in config.datums.items()} if config.datums else {}
     plies = config.plies  # Keep as Pydantic objects
 
     # Compute required fields from config
@@ -125,9 +161,11 @@ def assign_plies(
     for ply in plies:
         for cond in ply.conditions:
             required_fields.add(cond.field)
-        if isinstance(ply.thickness, str):
-            if ply.thickness in datums:
-                required_fields.add(datums[ply.thickness]["base"])
+            if isinstance(cond.operand, str) and cond.operand in datums:
+                required_fields.add(datums[cond.operand]["base"])
+        datum_names = get_datums_from_thickness(ply.thickness, datums)
+        for name in datum_names:
+            required_fields.add(datums[name]["base"])
     required_fields = list(required_fields)
     logger.info(f"Required fields: {required_fields}")
 
