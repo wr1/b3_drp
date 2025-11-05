@@ -105,13 +105,13 @@ plot_cmd = command(
             help="Scalar field to plot (default: total_thickness)",
         ),
         option(
-            flags=["--x-axis"],
+            flags=["--x-axis", "-x"],
             arg_type=str,
             default="x",
             help="X-axis field for plotting (default: x)",
         ),
         option(
-            flags=["--y-axis"],
+            flags=["--y-axis", "-y"],
             arg_type=str,
             default="y",
             help="Y-axis field for plotting (default: y)",

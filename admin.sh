@@ -1,17 +1,15 @@
 #!/bin/bash
 
-# Run ruff format
-ruff format
-
-# Run ruff check and pipe to out.txt
-ruff check --fix > out.txt
-
-# Run pytest and append to out.txt
+# For tests/test_drp_step.py
+git add tests/test_drp_step.py
+ruff format tests/test_drp_step.py
+ruff check --fix tests/test_drp_step.py > out.txt
 uv run pytest -v >> out.txt
+git commit tests/test_drp_step.py -m 'Add tests for DrapeStep class'
 
-# Git add and commit for each modified file
-git add src/b3_drp/core/assign.py
-git commit -m 'Pre-translate all point data to cell data once, remove special w handling'
-
-git add admin.sh
-git commit -m 'Update admin.sh for pre-translation and removal of w special treatment'
+# For tests/test_plotting.py
+git add tests/test_plotting.py
+ruff format tests/test_plotting.py
+ruff check --fix tests/test_plotting.py > out.txt
+uv run pytest -v >> out.txt
+git commit tests/test_plotting.py -m 'Add tests for plotting utilities'
