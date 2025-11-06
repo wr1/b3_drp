@@ -26,7 +26,7 @@ def grid_command(
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     config_data = load_config(config)
-    result_grid = assign_plies(config_data, grid, matdb, output)
+    assign_plies(config_data, grid, matdb, output)
 
 
 def blade_command(
@@ -37,19 +37,22 @@ def blade_command(
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     import yaml
+
     with open(config, "r") as f:
         blade_config = yaml.safe_load(f)
     config_dir = Path(config).parent
     workdir = blade_config.get("workdir", ".")
     workdir_path = config_dir / workdir
-    grid_path = workdir_path / "b3_msh" / "lm2.vtp"
+    grid_path = workdir_path / "b3_msh" / "lm2.vtu"
     if not grid_path.exists():
-        raise FileNotFoundError(f"Input grid not found: {grid_path}. Ensure b3_msh step has run.")
+        raise FileNotFoundError(
+            f"Input grid not found: {grid_path}. Ensure b3_msh step has run."
+        )
     matdb = blade_config["matdb"]
-    output_path = workdir_path / "b3_drp" / "draped.vtp"
+    output_path = workdir_path / "b3_drp" / "draped.vtu"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     config_data = load_config(config)
-    result_grid = assign_plies(config_data, str(grid_path), matdb, str(output_path))
+    assign_plies(config_data, str(grid_path), matdb, str(output_path))
 
 
 def plot_command(

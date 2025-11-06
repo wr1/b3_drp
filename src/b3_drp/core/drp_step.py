@@ -9,18 +9,18 @@ class DrapeStep(Statesman):
 
     workdir_key = "workdir"
     input_files = [
-        ManagedFile(name="b3_msh/lm2.vtp", non_empty=True),
+        ManagedFile(name="b3_msh/lm2.vtu", non_empty=True),
     ]
-    output_files = ["b3_drp/draped.vtp"]
+    output_files = ["b3_drp/draped.vtu"]
     dependent_sections = ["laminates"]
 
     def _execute(self):
         self.logger.info("Executing DrapeStep: Assigning plies to mesh.")
         config_dir = Path(self.config_path).parent
         workdir = config_dir / self.config["workdir"]
-        grid_path = workdir / "b3_msh" / "lm2.vtp"
+        grid_path = workdir / "b3_msh" / "lm2.vtu"
         matdb = self.config["matdb"]
-        output_path = workdir / "b3_drp" / "draped.vtp"
+        output_path = workdir / "b3_drp" / "draped.vtu"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         config_data = load_config(self.config_path)
         assign_plies(config_data, str(grid_path), matdb, str(output_path))

@@ -35,7 +35,7 @@ def load_matdb(matdb_path: Union[str, dict]) -> MatDB:
             data = json.load(f)
     else:
         data = matdb_path
-    logger.info(f"Loaded material database")
+    logger.info("Loaded material database")
     return MatDB(data)
 
 
@@ -86,10 +86,12 @@ def evaluate_conditions(
     return mask
 
 
-def parse_thickness_expression(thickness_expr: str, datums: Dict[str, Any], df: pd.DataFrame) -> np.ndarray:
+def parse_thickness_expression(
+    thickness_expr: str, datums: Dict[str, Any], df: pd.DataFrame
+) -> np.ndarray:
     """Parse and evaluate thickness expression with datums."""
     # Find datum names in expression
-    words = re.findall(r'\b\w+\b', thickness_expr)
+    words = re.findall(r"\b\w+\b", thickness_expr)
     datum_names = [w for w in words if w in datums]
     # Interpolate each datum
     interp_datums = {}
@@ -104,7 +106,9 @@ def parse_thickness_expression(thickness_expr: str, datums: Dict[str, Any], df: 
         result = eval(thickness_expr, {"__builtins__": None}, interp_datums)
         return np.array(result, dtype=np.float32)
     except Exception as e:
-        raise ValueError(f"Error evaluating thickness expression '{thickness_expr}': {e}")
+        raise ValueError(
+            f"Error evaluating thickness expression '{thickness_expr}': {e}"
+        )
 
 
 def get_thickness(
@@ -131,10 +135,12 @@ def get_thickness(
         raise ValueError("Thickness must be float or string.")
 
 
-def get_datums_from_thickness(thickness: Union[float, str], datums: Dict[str, Any]) -> List[str]:
+def get_datums_from_thickness(
+    thickness: Union[float, str], datums: Dict[str, Any]
+) -> List[str]:
     """Get list of datum names used in thickness."""
     if isinstance(thickness, str) and thickness not in datums:
-        words = re.findall(r'\b\w+\b', thickness)
+        words = re.findall(r"\b\w+\b", thickness)
         return [w for w in words if w in datums]
     return []
 
@@ -151,9 +157,11 @@ def assign_plies(
     # Pre-translate all point data to cell data
     grid = grid.point_data_to_cell_data(pass_point_data=True, progress_bar=False)
     logger.info("Translated all point data to cell data")
-    logger.info(f"Loading material database")
+    logger.info("Loading material database")
     matdb = load_matdb(matdb_path)
-    datums = {k: v.model_dump() for k, v in config.datums.items()} if config.datums else {}
+    datums = (
+        {k: v.model_dump() for k, v in config.datums.items()} if config.datums else {}
+    )
     plies = config.plies  # Keep as Pydantic objects
 
     # Compute required fields from config

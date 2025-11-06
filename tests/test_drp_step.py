@@ -4,9 +4,8 @@ import tempfile
 import os
 import json
 import yaml
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from b3_drp.core.drp_step import DrapeStep
-from b3_drp.core.models import Config
 
 
 def test_drape_step():
@@ -31,8 +30,8 @@ def test_drape_step():
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = os.path.join(tmpdir, "config.yaml")
         workdir = os.path.join(tmpdir, "test_workdir")
-        grid_path = os.path.join(workdir, "b3_msh", "lm2.vtp")
-        output_path = os.path.join(workdir, "b3_drp", "draped.vtp")
+        grid_path = os.path.join(workdir, "b3_msh", "lm2.vtu")
+        output_path = os.path.join(workdir, "b3_drp", "draped.vtu")
         matdb_path = os.path.join(tmpdir, "matdb.json")
 
         # Create directories
@@ -50,6 +49,7 @@ def test_drape_step():
         # Create a simple grid
         import pyvista as pv
         import numpy as np
+
         points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
         cells = np.array([4, 0, 1, 2, 3])
         grid = pv.UnstructuredGrid(cells, [pv.CellType.QUAD], points)
