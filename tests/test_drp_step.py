@@ -31,8 +31,8 @@ def test_drape_step():
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = os.path.join(tmpdir, "config.yaml")
         workdir = os.path.join(tmpdir, "test_workdir")
-        grid_path = os.path.join(workdir, "b3_msh", "lm2.vtu")
-        output_path = os.path.join(workdir, "b3_drp", "draped.vtu")
+        grid_path = os.path.join(workdir, "b3_msh", "lm2.vtp")
+        output_path = os.path.join(workdir, "b3_drp", "draped.vtp")
         matdb_path = os.path.join(tmpdir, "matdb.json")
 
         # Create directories
