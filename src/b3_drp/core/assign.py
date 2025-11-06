@@ -149,7 +149,7 @@ def assign_plies(
     logger.info(f"Loading grid from {grid_path}")
     grid = pv.read(grid_path)
     # Pre-translate all point data to cell data
-    grid = grid.point_data_to_cell_data(pass_point_data=True)
+    grid = grid.point_data_to_cell_data(pass_point_data=True, progress_bar=False)
     logger.info("Translated all point data to cell data")
     logger.info(f"Loading material database")
     matdb = load_matdb(matdb_path)
