@@ -24,7 +24,7 @@ plies:
     key: 101
   - mat: foam
     angle: 0
-    thickness: foam_taper
+    thickness: foam_taper * x_taper
     parent: quad
     conditions:
       - field: x
