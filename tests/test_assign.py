@@ -17,7 +17,7 @@ from b3_drp.core.assign import (
     get_thickness,
     get_datums_from_thickness,
 )
-from b3_drp.core.models import Condition, Config, Ply
+from b3_drp.core.models import Condition, Config, Datum, Ply
 
 
 def test_load_config():
@@ -125,16 +125,20 @@ def test_evaluate_conditions_with_datum():
         }
     }
     mask = evaluate_conditions(df, conditions, datums)
-    expected = np.array(
-        [False, True, True]
-    )  # y > interp(x): 0>0.2?F, 0.5>0.3?T, 1>0.4?T
+    expected = np.array([False, True, True])  # y > interp(x): 0>0.2?F, 0.5>0.3?T, 1>0.4?T
     np.testing.assert_array_equal(mask, expected)
 
 
 def test_parse_thickness_expression():
     datums = {
-        "t1": np.array([0.001, 0.002, 0.003]),
-        "t2": np.array([0.1, 0.2, 0.3]),
+        "t1": {
+            "base": "x",
+            "values": [[0, 0.001], [1, 0.002], [2, 0.003]],
+        },
+        "t2": {
+            "base": "x",
+            "values": [[0, 0.1], [1, 0.2], [2, 0.3]],
+        },
     }
     df = pd.DataFrame({"x": [0, 1, 2]})
     result = parse_thickness_expression("t1 + t2", datums, df)
@@ -241,18 +245,7 @@ def test_assign_plies_missing_material():
     grid = pv.UnstructuredGrid(cells, [pv.CellType.QUAD], points)
     grid.cell_data["x"] = np.array([0.5])
 
-    config = Config(
-        plies=[
-            Ply(
-                mat="missing",
-                angle=0,
-                thickness=0.001,
-                parent="plate",
-                conditions=[],
-                key=100,
-            )
-        ]
-    )
+    config = Config(plies=[Ply(mat="missing", angle=0, thickness=0.001, parent="plate", conditions=[], key=100)])
     matdb = {"carbon": {"id": 1}}
 
     with tempfile.TemporaryDirectory() as tmpdir:
