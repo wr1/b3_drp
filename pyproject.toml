@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "b3_drp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Library for assigning composite material plies to FEA model elements"
 authors = [{name = "wr1"}]
 readme = "README.md"
