@@ -2,11 +2,10 @@
 
 import logging
 from rich.logging import RichHandler
-from treeparse import cli, command, argument, option
+from treeparse import cli, command, option
 from ..core.assign import assign_plies, load_config
 from ..core.plotting import plot_grid
 import pyvista as pv
-from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,8 +14,8 @@ logging.basicConfig(
 )
 
 
-def grid_command(
-    config: str,
+def drape_command(
+    lamplan: str,
     grid: str,
     matdb: str,
     output: str,
@@ -25,34 +24,8 @@ def grid_command(
     """Assign composite plies to FEA mesh."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    config_data = load_config(config)
+    config_data = load_config(lamplan)
     assign_plies(config_data, grid, matdb, output)
-
-
-def blade_command(
-    config: str,
-    verbose: bool = False,
-) -> None:
-    """Assign plies based on blade config YAML."""
-    if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-    import yaml
-
-    with open(config, "r") as f:
-        blade_config = yaml.safe_load(f)
-    config_dir = Path(config).parent
-    workdir = blade_config.get("workdir", ".")
-    workdir_path = config_dir / workdir
-    grid_path = workdir_path / "b3_msh" / "lm2.vtu"
-    if not grid_path.exists():
-        raise FileNotFoundError(
-            f"Input grid not found: {grid_path}. Ensure b3_msh step has run."
-        )
-    matdb = blade_config["matdb"]
-    output_path = workdir_path / "b3_drp" / "draped.vtu"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    config_data = load_config(config)
-    assign_plies(config_data, str(grid_path), matdb, str(output_path))
 
 
 def plot_command(
@@ -76,20 +49,28 @@ def plot_command(
     )
 
 
-drape_group = cli(
-    name="drape",
-    help="Commands for draping plies onto meshes.",
+app = cli(
+    name="b3_drp",
+    help="Assign composite material plies to FEA model elements.",
 )
 
-grid_cmd = command(
-    name="grid",
-    help="Assign plies to a grid using separate config and matdb files.",
-    callback=grid_command,
-    arguments=[
-        argument(name="config", arg_type=str, help="Config YAML file"),
-        argument(name="grid", arg_type=str, help="Input VTK grid file"),
-    ],
+drape_cmd = command(
+    name="drape",
+    help="Assign plies to a grid using laminate plan, grid, and matdb files.",
+    callback=drape_command,
     options=[
+        option(
+            flags=["--lamplan", "-l"],
+            arg_type=str,
+            required=True,
+            help="Laminate plan YAML file",
+        ),
+        option(
+            flags=["--grid", "-g"],
+            arg_type=str,
+            required=True,
+            help="Input VTK grid file",
+        ),
         option(
             flags=["--matdb", "-m"],
             arg_type=str,
@@ -110,39 +91,19 @@ grid_cmd = command(
         ),
     ],
 )
-drape_group.commands.append(grid_cmd)
-
-blade_cmd = command(
-    name="blade",
-    help="Assign plies to a blade mesh using a single config YAML.",
-    callback=blade_command,
-    arguments=[
-        argument(name="config", arg_type=str, help="Blade config YAML file"),
-    ],
-    options=[
-        option(
-            flags=["--verbose", "-v"],
-            arg_type=bool,
-            default=False,
-            help="Verbose output",
-        ),
-    ],
-)
-drape_group.commands.append(blade_cmd)
-
-app = cli(
-    name="b3_drp",
-    help="Assign composite material plies to FEA model elements.",
-)
+app.commands.append(drape_cmd)
 
 plot_cmd = command(
     name="plot",
     help="Plot the grid.",
     callback=plot_command,
-    arguments=[
-        argument(name="grid", arg_type=str, help="Input VTK grid file"),
-    ],
     options=[
+        option(
+            flags=["--grid", "-g"],
+            arg_type=str,
+            required=True,
+            help="Input VTK grid file",
+        ),
         option(
             flags=["--output", "-o"],
             arg_type=str,
@@ -176,7 +137,6 @@ plot_cmd = command(
     ],
 )
 app.commands.append(plot_cmd)
-app.commands.append(drape_group)
 
 
 def main():
