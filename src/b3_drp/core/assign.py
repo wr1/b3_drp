@@ -1,5 +1,3 @@
-"""Assign plies to mesh elements based on conditions."""
-
 import numpy as np
 import pyvista as pv
 import pandas as pd
@@ -232,5 +230,13 @@ def assign_plies(
     logger.info("Added summed thickness arrays")
 
     logger.info(f"Saving output to {output_path}")
-    grid.save(output_path)
+    # Convert to PolyData for VTK
+    poly = pv.PolyData()
+    poly.points = grid.points
+    poly.lines = grid.lines
+    for key, value in grid.cell_data.items():
+        poly.cell_data[key] = value
+    for key, value in grid.point_data.items():
+        poly.point_data[key] = value
+    poly.save(output_path)
     return grid
