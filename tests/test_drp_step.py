@@ -30,8 +30,8 @@ def test_drape_step():
     with tempfile.TemporaryDirectory() as tmpdir:
         config_path = os.path.join(tmpdir, "config.yaml")
         workdir = os.path.join(tmpdir, "test_workdir")
-        grid_path = os.path.join(workdir, "b3_msh", "lm2.vtu")
-        output_path = os.path.join(workdir, "b3_drp", "draped.vtu")
+        grid_path = os.path.join(workdir, "b3_msh", "lm2.vtp")
+        output_path = os.path.join(workdir, "b3_drp", "draped.vtk")
         matdb_path = os.path.join(tmpdir, "matdb.json")
 
         # Create directories
@@ -46,13 +46,13 @@ def test_drape_step():
         with open(matdb_path, "w") as f:
             json.dump({"carbon": {"id": 1}}, f)
 
-        # Create a simple grid
+        # Create a simple PolyData grid (for .vtp)
         import pyvista as pv
         import numpy as np
 
         points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]])
-        cells = np.array([4, 0, 1, 2, 3])
-        grid = pv.UnstructuredGrid(cells, [pv.CellType.QUAD], points)
+        faces = np.array([4, 0, 1, 2, 3])  # One quad face
+        grid = pv.PolyData(points, faces)
         grid.cell_data["x"] = np.array([0.5])
         grid.save(grid_path)
 
