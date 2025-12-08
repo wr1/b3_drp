@@ -25,6 +25,13 @@ dependencies = [
 b3_drp = "b3_drp.cli.cli:main"
 
 [tool.uv]
+dev-dependencies = [
+    "pytest",
+    "ruff",
+    "mkdocs",
+    "mkdocs-material",
+]
+
 [tool.ruff]
 line-length = 88
 
