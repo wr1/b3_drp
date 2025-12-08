@@ -17,6 +17,7 @@ dependencies = [
     "pydantic",
     "treeparse",
     "matplotlib",
+    "statesman @ git+https://github.com/wr1/statesman",
     "rich",
 ]
 
@@ -26,6 +27,9 @@ b3_drp = "b3_drp.cli.cli:main"
 [tool.uv]
 [tool.ruff]
 line-length = 88
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.pytest.ini_options]
 addopts = "--cov=b3_drp"
