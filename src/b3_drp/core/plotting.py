@@ -23,7 +23,7 @@ def plot_grid(
         plotter.add_mesh(grid)
     plotter.view_xy()
     if "CI" in os.environ or "GITHUB_ACTIONS" in os.environ:
-        logger.info(f"Skipping screenshot in CI environment")
+        logger.info("Skipping screenshot in CI environment")
     else:
         plotter.screenshot(output_file)
         logger.info(f"Plot saved to {output_file}")
