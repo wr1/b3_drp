@@ -1,3 +1,5 @@
+"""Statesman step for draping plies onto the mesh."""
+
 from pathlib import Path
 from statesman import Statesman
 from statesman.core.base import ManagedFile
@@ -15,6 +17,7 @@ class DrapeStep(Statesman):
     dependent_sections = ["laminates"]
 
     def _execute(self):
+        """Execute the draping step."""
         self.logger.info("Executing DrapeStep: Assigning plies to mesh.")
         config_dir = Path(self.config_path).parent
         workdir = config_dir / self.config["workdir"]

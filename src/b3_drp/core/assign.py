@@ -1,3 +1,5 @@
+"""Core assignment logic for plies."""
+
 import numpy as np
 import pyvista as pv
 import pandas as pd
@@ -6,6 +8,9 @@ import logging
 import re
 from typing import Dict, List, Any, Union
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from functools import partial
+
 from .models import Config, MatDB, Condition
 
 logger = logging.getLogger(__name__)
@@ -38,7 +43,7 @@ def load_matdb(matdb_path: Union[str, dict]) -> MatDB:
 
 
 def prepare_grid(grid: pv.UnstructuredGrid, required_fields: List[str]) -> pd.DataFrame:
-    """Prepare grid data."""
+    """Prepare grid data into DataFrame."""
     df = pd.DataFrame()
     for field in required_fields:
         if field in grid.cell_data:
@@ -143,37 +148,48 @@ def get_datums_from_thickness(
     return []
 
 
+def _process_ply(ply_data, df, datums, matdb):
+    """Worker function for parallel ply processing."""
+    idx, ply = ply_data
+    key = ply.key
+    parent = ply.parent
+    mat_id = matdb.root[ply.mat].id
+    angle = ply.angle
+    ply_num = f"{idx + 1:06d}"
+
+    # Evaluate condition mask (vectorized)
+    mask = evaluate_conditions(df, ply.conditions, datums)
+
+    # Compute thickness array
+    thickness_arr = get_thickness(ply.thickness, df, datums)
+
+    # Return only serializable NumPy arrays + metadata
+    return {
+        "ply_num": ply_num,
+        "parent": parent,
+        "key": key,
+        "mask": mask.astype(np.bool_),
+        "thickness": thickness_arr.astype(np.float32),
+        "material_id": mat_id,
+        "angle": float(angle),
+    }
+
+
 def assign_plies(
     config: Config,
     grid_path: str,
     matdb_path: Union[str, dict],
     output_path: str,
+    max_workers: int = None,
 ) -> pv.UnstructuredGrid:
-    """Main function to assign plies."""
+    """Assign composite plies to FEA mesh using parallel processing."""
     logger.info(f"Loading grid from {grid_path}")
     grid = pv.read(grid_path)
-    # Pre-translate all point data to cell data
     grid = grid.point_data_to_cell_data(pass_point_data=True, progress_bar=False)
-    logger.info("Translated all point data to cell data")
-    logger.info("Loading material database")
-    matdb = load_matdb(matdb_path)
-    datums = (
-        {k: v.model_dump() for k, v in config.datums.items()} if config.datums else {}
-    )
-    plies = config.plies  # Keep as Pydantic objects
 
-    # Compute required fields from config
-    required_fields = set()
-    for ply in plies:
-        for cond in ply.conditions:
-            required_fields.add(cond.field)
-            if isinstance(cond.operand, str) and cond.operand in datums:
-                required_fields.add(datums[cond.operand]["base"])
-        datum_names = get_datums_from_thickness(ply.thickness, datums)
-        for name in datum_names:
-            required_fields.add(datums[name]["base"])
-    required_fields = list(required_fields)
-    logger.info(f"Required fields: {required_fields}")
+    matdb = load_matdb(matdb_path)
+    datums = {k: v.model_dump() for k, v in (config.datums or {}).items()}
+    plies = config.plies
 
     # Check materials
     used_mats = {p.mat for p in plies}
@@ -182,53 +198,66 @@ def assign_plies(
         raise ValueError(f"Missing materials: {missing}")
     logger.info(f"Used materials: {used_mats}")
 
-    # Prepare grid
-    df = prepare_grid(grid, required_fields)
-    logger.info(f"Prepared grid with {len(df)} cells")
+    # Precompute required fields
+    required_fields = set()
+    for ply in plies:
+        for cond in ply.conditions:
+            required_fields.add(cond.field)
+            if isinstance(cond.operand, str) and cond.operand in datums:
+                required_fields.add(datums[cond.operand]["base"])
+        for name in get_datums_from_thickness(ply.thickness, datums):
+            required_fields.add(datums[name]["base"])
+    df = prepare_grid(grid, list(required_fields))
+    logger.info(
+        f"Prepared DataFrame with {len(df):,} cells and {len(df.columns)} fields"
+    )
 
-    # Sort plies by key, then by definition order
-    plies_list = list(enumerate(plies))
-    plies_list.sort(key=lambda x: (x[1].key, x[0]))
-    plies = [p for _, p in plies_list]
-    logger.info(f"Sorted {len(plies)} plies")
+    # Sort plies for deterministic output
+    plies_with_idx = sorted(enumerate(plies), key=lambda x: (x[1].key, x[0]))
 
-    # Initialize sums
+    # Parallel processing of plies
+    logger.info(
+        f"Starting parallel evaluation of {len(plies_with_idx)} plies on {max_workers or 'auto'} workers"
+    )
+
+    worker = partial(_process_ply, df=df, datums=datums, matdb=matdb)
+
+    results = []
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(worker, ply_item) for ply_item in plies_with_idx]
+
+        for future in as_completed(futures):
+            results.append(future.result())
+
+    # Sort results back to original order
+    results.sort(key=lambda r: r["ply_num"])
+
+    # Serial assignment to grid
+    logger.info("Gathering results and assigning to grid (serial)")
+
     total_thickness = np.zeros(len(df), dtype=np.float32)
-    n_plies = np.zeros(len(df), dtype=int)
+    n_plies = np.zeros(len(df), dtype=np.int32)
     per_parent_thickness = defaultdict(lambda: np.zeros(len(df), dtype=np.float32))
 
-    # Assign plies
-    for ply in plies:
-        logger.info(f"Processing ply {ply.key} with material {ply.mat}")
-        mask = evaluate_conditions(df, ply.conditions, datums)
-        thickness_arr = get_thickness(ply.thickness, df, datums)
-        parent = ply.parent
-        # Create arrays
-        mat_id = matdb.root[ply.mat].id
-        angle = ply.angle
-        key = ply.key
-        ply_num = f"{plies.index(ply) + 1:06d}"
-        grid.cell_data[f"ply_{ply_num}_{parent}_{key}_material"] = np.where(
-            mask, mat_id, -1
-        )
-        grid.cell_data[f"ply_{ply_num}_{parent}_{key}_angle"] = np.where(mask, angle, 0)
-        grid.cell_data[f"ply_{ply_num}_{parent}_{key}_thickness"] = np.where(
-            mask, thickness_arr, 0
-        )
-        logger.debug(f"Added ply data for {ply_num}")
+    for res in results:
+        mask = res["mask"]
+        thick = res["thickness"]
 
-        # Update sums
-        total_thickness += np.where(mask, thickness_arr, 0)
-        n_plies += mask.astype(int)
-        per_parent_thickness[parent] += np.where(mask, thickness_arr, 0)
+        prefix = f"ply_{res['ply_num']}_{res['parent']}_{res['key']}"
+        grid.cell_data[f"{prefix}_material"] = np.where(mask, res["material_id"], -1)
+        grid.cell_data[f"{prefix}_angle"] = np.where(mask, res["angle"], 0.0)
+        grid.cell_data[f"{prefix}_thickness"] = np.where(mask, thick, 0.0)
 
-    # Add summed arrays
+        total_thickness += np.where(mask, thick, 0)
+        n_plies += mask.astype(np.int32)
+        per_parent_thickness[res["parent"]] += np.where(mask, thick, 0)
+
+    # Add summary arrays
     grid.cell_data["total_thickness"] = total_thickness
     grid.cell_data["n_plies"] = n_plies
     for parent, thick in per_parent_thickness.items():
         grid.cell_data[f"{parent}_thickness"] = thick
-    logger.info("Added summed thickness arrays")
 
-    logger.info(f"Saving output to {output_path}")
+    logger.info(f"Saving result to {output_path}")
     grid.save(output_path)
     return grid

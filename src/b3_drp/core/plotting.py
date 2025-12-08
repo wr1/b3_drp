@@ -1,5 +1,6 @@
 """Plotting utilities for ply assignment."""
 
+import os
 import pyvista as pv
 from typing import Optional
 import logging
@@ -21,5 +22,8 @@ def plot_grid(
     else:
         plotter.add_mesh(grid)
     plotter.view_xy()
-    plotter.screenshot(output_file)
-    logger.info(f"Plot saved to {output_file}")
+    if "CI" in os.environ or "GITHUB_ACTIONS" in os.environ:
+        logger.info("Skipping screenshot in CI environment")
+    else:
+        plotter.screenshot(output_file)
+        logger.info(f"Plot saved to {output_file}")

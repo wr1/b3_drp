@@ -45,5 +45,5 @@ logging.info(
     "Example completed. Check examples/output_mesh.vtu and examples/workflow_plot.png"
 )
 logging.info(
-    "To run the same draping operation using b3_drp CLI: b3_drp assign examples/config.yaml examples/input_mesh.vtu examples/matdb.json examples/output_mesh.vtu --plot --plot-output examples/workflow_plot.png"
+    "To run the same draping operation using b3_drp CLI: b3_drp drape examples/config.yaml examples/input_mesh.vtu examples/matdb.json examples/output_mesh.vtu --plot --plot-output examples/workflow_plot.png"
 )
