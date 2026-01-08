@@ -1,3 +1,4 @@
+[![Test](https://github.com/wr1/b3_drp/actions/workflows/ci.yml/badge.svg)](https://github.com/wr1/b3_drp/actions/workflows/ci.yml)![Version](https://img.shields.io/github/v/release/wr1/b3_drp)
 # b3_drp
 
 A library for assigning composite material plies to FEA model elements.
